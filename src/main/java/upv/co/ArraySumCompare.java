@@ -42,7 +42,7 @@ public class ArraySumCompare {
         int[] cNormal = new int[size];
         int[] cSimd = new int[size];
 
-        Random r = new Random(); // Semilla fija para reproducibilidad
+        Random r = new Random();
 
         for (int i = 0; i < size; i++) {
             a[i] = r.nextInt(100);
