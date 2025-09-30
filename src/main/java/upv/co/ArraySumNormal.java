@@ -4,7 +4,7 @@ import java.util.Random;
 
 public class ArraySumNormal {
     public static void main(String[] args) {
-        int size = 100000000;
+        int size = 1000;
         int[] a = new int[size];
         int[] b = new int[size];
         int[] c = new int[size];
