@@ -14,13 +14,35 @@ public class ArraySumCompare {
     
     public static void main(String[] args) {
         System.err.close();
-        int size = 10000000; // 10 millones para mejor medición
+        
+        // Calcular tamaño máximo seguro (90% del heap disponible / 4 arrays)
+        long maxMemory = Runtime.getRuntime().maxMemory();
+        long maxElements = (long) ((maxMemory * 0.9) / (4 * 4)); // 4 arrays, 4 bytes/int
+        
+        int size = 1_000_000_000; // 100 millones por defecto
+        
+        // Ajustar si supera la memoria disponible
+        if (size > maxElements) {
+            size = (int) maxElements;
+            System.out.println("⚠️ Tamaño ajustado a " + size + " por límite de memoria");
+        }
+        
+        // Límite máximo de arrays en Java
+        if (size > Integer.MAX_VALUE - 8) {
+            size = Integer.MAX_VALUE - 8;
+            System.out.println("⚠️ Tamaño ajustado a " + size + " (límite de array en Java)");
+        }
+        
+        System.out.println("Memoria heap máxima: " + (maxMemory / (1024*1024)) + " MB");
+        System.out.println("Memoria estimada necesaria: " + (size * 4L * 4 / (1024*1024)) + " MB");
+        System.out.println("Creando arrays de " + size + " elementos...\n");
+        
         int[] a = new int[size];
         int[] b = new int[size];
         int[] cNormal = new int[size];
         int[] cSimd = new int[size];
 
-        Random r = new Random(42); // Semilla fija para reproducibilidad
+        Random r = new Random(); // Semilla fija para reproducibilidad
 
         for (int i = 0; i < size; i++) {
             a[i] = r.nextInt(100);
