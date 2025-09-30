@@ -1,0 +1,36 @@
+        #include <stdio.h>
+        #include <stdlib.h>
+        #include <time.h>
+
+        int main() {
+        int size = 100;
+        int a[100]; // primer array
+        int b[100]; // segundo array
+        int c[100]; // array de sumas
+
+        srand(time(NULL)); // inicializar generador aleatorio
+
+        // Llenamos los arrays con números aleatorios [0, 99]
+        for (int i = 0; i < size; i++) {
+        a[i] = rand() % 100;
+        b[i] = rand() % 100;
+        }
+
+        clock_t start = clock(); // tiempo antes de la suma
+
+        // Suma de arrays
+        for (int i = 0; i < size; i++) {
+        c[i] = a[i] + b[i];
+        }
+
+        clock_t end = clock(); // tiempo después de la suma
+
+        // Duración en segundos (double)
+        double duration = (double)(end - start) / CLOCKS_PER_SEC;
+
+
+        printf("\nTiempo de ejecución:\n");
+        printf("%.6f segundos\n", duration);
+
+        return 0;
+        }
