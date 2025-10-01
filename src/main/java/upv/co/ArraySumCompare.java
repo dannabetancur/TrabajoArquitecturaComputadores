@@ -24,13 +24,13 @@ public class ArraySumCompare {
         // Ajustar si supera la memoria disponible
         if (size > maxElements) {
             size = (int) maxElements;
-            System.out.println("⚠️ Tamaño ajustado a " + size + " por límite de memoria");
+            System.out.println("Tamaño ajustado a " + size + " por límite de memoria");
         }
         
         // Límite máximo de arrays en Java
         if (size > Integer.MAX_VALUE - 8) {
             size = Integer.MAX_VALUE - 8;
-            System.out.println("⚠️ Tamaño ajustado a " + size + " (límite de array en Java)");
+            System.out.println("Tamaño ajustado a " + size + " (límite de array en Java)");
         }
         
         System.out.println("Memoria heap máxima: " + (maxMemory / (1024*1024)) + " MB");
