@@ -176,14 +176,14 @@ public class MatrixMultCompare {
             System.out.println("Error máximo: " + maxError);
         }
         
-        // FLOPS (Floating Point Operations Per Second) - aunque sean enteros, usamos la misma métrica
+        // GIOPS (Giga Integer Operations Per Second)
         long operations = (long) N * N * (2L * N - 1);
-        double gflopsNormal = operations / (avgNormal / 1e9) / 1e9;
-        double gflopsSimd = operations / (avgSimd / 1e9) / 1e9;
+        double giopsNormal = operations / (avgNormal / 1e9) / 1e9;
+        double giopsSimd = operations / (avgSimd / 1e9) / 1e9;
         
         System.out.println("\nRendimiento computacional:");
-        System.out.println("Normal: " + String.format("%.2f", gflopsNormal) + " GFLOPS");
-        System.out.println("SIMD:   " + String.format("%.2f", gflopsSimd) + " GFLOPS");
+        System.out.println("Normal: " + String.format("%.2f", giopsNormal) + " GIOPS");
+        System.out.println("SIMD:   " + String.format("%.2f", giopsSimd) + " GIOPS");
         
         // Throughput
         double throughputNormal = (N * N * 1000.0) / avgNormalMillis; // elementos/ms
@@ -193,10 +193,6 @@ public class MatrixMultCompare {
         System.out.println("SIMD:   " + String.format("%.2f", throughputSimd) + " M elementos/segundo");
         
         // Muestra de resultados
-        System.out.println("\nMuestra de C_simd[0][0..4]:");
-        for (int j = 0; j < Math.min(5, N); j++) {
-            System.out.print(C_simd[0][j] + " ");
-        }
         System.out.println();
     }
     
@@ -239,7 +235,7 @@ public class MatrixMultCompare {
                 for (; k < upperBound; k += SPECIES.length()) {
                     IntVector va = IntVector.fromArray(SPECIES, A[i], k);
                     IntVector vb = IntVector.fromArray(SPECIES, BT[j], k);
-                    vsum = vsum.add(va.mul(vb));  // CORREGIDO: mul + add en lugar de fma
+                    vsum = vsum.add(va.mul(vb));
                 }
                 
                 int sum = vsum.reduceLanes(VectorOperators.ADD);
@@ -283,7 +279,7 @@ public class MatrixMultCompare {
                 for (; k < upperBound; k += SPECIES.length()) {
                     IntVector va = IntVector.fromArray(SPECIES, A[i], k);
                     IntVector vb = IntVector.fromArray(SPECIES, BT[j], k);
-                    vsum = vsum.add(va.mul(vb));  // CORREGIDO: mul + add en lugar de fma
+                    vsum = vsum.add(va.mul(vb));
                 }
                 
                 int sum = vsum.reduceLanes(VectorOperators.ADD);
