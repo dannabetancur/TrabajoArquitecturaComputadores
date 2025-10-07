@@ -1,6 +1,6 @@
 //Código para compilar y ejecutar java desde el terminal
-// >> javac --add-modules jdk.incubator.vector upv/co/ArraySumSimd.java
-// >> java --add-modules jdk.incubator.vector upv.co.ArraySumSimd
+// >> javac --add-modules jdk.incubator.vector ArraySumSimd.java
+// >> java --add-modules jdk.incubator.vector ArraySumSimd.java
 
 
 package upv.co;

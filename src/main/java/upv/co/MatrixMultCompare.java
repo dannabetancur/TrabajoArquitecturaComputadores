@@ -1,6 +1,6 @@
 //Código para compilar y ejecutar java desde el terminal
-// >> javac --add-modules jdk.incubator.vector upv/co/MatrixMultCompare.java
-// >> java --add-modules jdk.incubator.vector upv.co.MatrixMultCompare
+// >> javac --add-modules jdk.incubator.vector MatrixMultCompare.java
+// >> java --add-modules jdk.incubator.vector MatrixMultCompare.java 
 
 package upv.co;
 
