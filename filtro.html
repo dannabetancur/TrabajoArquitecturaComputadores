@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIMD en Acción - Filtro Visual Interactivo</title>
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: radial-gradient(circle at top, #0a0a1f, #01010a);
+    color: #fff;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  h1 {
+    font-size: 2.3rem;
+    color: #4FC3F7;
+    margin-bottom: 1rem;
+  }
+
+  p {
+    max-width: 750px;
+    margin: 0 auto 1.5rem;
+    line-height: 1.5;
+  }
+
+  .canvases {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-top: 1.5rem;
+  }
+
+  canvas {
+    border-radius: 15px;
+    box-shadow: 0 0 25px #00BCD4;
+    background: #000;
+    margin-bottom: 0.5rem;
+  }
+
+  .label {
+    font-weight: bold;
+    color: #4FC3F7;
+  }
+
+  button, input[type="file"] {
+    background: #4FC3F7;
+    color: #000;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 12px;
+    margin: 0.5rem;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+  }
+
+  button:hover, input[type="file"]:hover {
+    background: #00BCD4;
+    transform: scale(1.05);
+  }
+
+  footer {
+    margin-top: 3rem;
+    font-size: 0.9rem;
+    color: #aaa;
+  }
+
+  #times {
+    margin-top: 1rem;
+    font-size: 1rem;
+    color: #ffeb3b;
+  }
+</style>
+</head>
+<body>
+
+<h1>SIMD en Acción 🎨⚙️</h1>
+<p>
+SIMD (Single Instruction, Multiple Data) permite ejecutar una misma instrucción sobre muchos datos a la vez, 
+lo que acelera tareas repetitivas en inteligencia artificial, gráficos 3D, edición de vídeo y procesamiento científico.
+Aquí puedes ver cómo un filtro visual se aplica a una imagen <b>con y sin SIMD</b>.
+</p>
+
+<!-- Subir imagen -->
+<input type="file" id="upload" accept="image/*">
+<p>📸 Sube una imagen para aplicar el filtro.</p>
+
+<div class="canvases">
+  <div>
+    <canvas id="noSimdCanvas" width="300" height="200"></canvas>
+    <div class="label">Sin SIMD (píxel a píxel)</div>
+  </div>
+  <div>
+    <canvas id="simdCanvas" width="300" height="200"></canvas>
+    <div class="label">Con SIMD (procesamiento paralelo)</div>
+  </div>
+</div>
+
+<div>
+  <button id="filterBtn">Aplicar filtro negativo</button>
+  <button id="resetBtn">Reiniciar</button>
+</div>
+
+<div id="times"></div>
+
+<footer>
+  💡 Observa cómo SIMD puede procesar grandes volúmenes de datos visuales más rápido.
+</footer>
+
+<script>
+const img = new Image();
+const upload = document.getElementById("upload");
+const filterBtn = document.getElementById("filterBtn");
+const resetBtn = document.getElementById("resetBtn");
+const times = document.getElementById("times");
+
+const noSimdCanvas = document.getElementById("noSimdCanvas");
+const simdCanvas = document.getElementById("simdCanvas");
+const ctxNoSimd = noSimdCanvas.getContext("2d");
+const ctxSimd = simdCanvas.getContext("2d");
+
+// Al subir imagen
+upload.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    img.src = event.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+// Cuando la imagen carga, se dibuja en ambos canvas
+img.onload = () => {
+  ctxNoSimd.drawImage(img, 0, 0, noSimdCanvas.width, noSimdCanvas.height);
+  ctxSimd.drawImage(img, 0, 0, simdCanvas.width, simdCanvas.height);
+  times.textContent = "";
+};
+
+// Filtro negativo tradicional (sin SIMD)
+function applyFilterNoSimd() {
+  const imgData = ctxNoSimd.getImageData(0, 0, noSimdCanvas.width, noSimdCanvas.height);
+  const data = imgData.data;
+  const start = performance.now();
+
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = 255 - data[i];       // R
+    data[i + 1] = 255 - data[i+1]; // G
+    data[i + 2] = 255 - data[i+2]; // B
+  }
+
+  const end = performance.now();
+  ctxNoSimd.putImageData(imgData, 0, 0);
+  return (end - start).toFixed(2);
+}
+
+// Filtro negativo SIMD simulado (procesando bloques)
+function applyFilterSimd() {
+  const imgData = ctxSimd.getImageData(0, 0, simdCanvas.width, simdCanvas.height);
+  const data = imgData.data;
+  const start = performance.now();
+
+  // Procesar 8 píxeles a la vez
+  for (let i = 0; i < data.length; i += 4 * 8) {
+    for (let j = 0; j < 4 * 8; j += 4) {
+      data[i + j] = 255 - data[i + j];
+      data[i + j + 1] = 255 - data[i + j + 1];
+      data[i + j + 2] = 255 - data[i + j + 2];
+    }
+  }
+
+  const end = performance.now();
+  ctxSimd.putImageData(imgData, 0, 0);
+  return (end - start).toFixed(2);
+}
+
+filterBtn.onclick = () => {
+  if (!img.src) {
+    alert("Por favor, sube una imagen primero 📸");
+    return;
+  }
+
+  const t1 = applyFilterNoSimd();
+  const t2 = applyFilterSimd();
+
+  times.innerHTML = `
+    ⏱️ Tiempo sin SIMD: <b>${t1} ms</b><br>
+    ⚡ Tiempo con SIMD (simulado): <b>${t2} ms</b>
+  `;
+};
+
+resetBtn.onclick = () => {
+  if (!img.src) return;
+  ctxNoSimd.drawImage(img, 0, 0, noSimdCanvas.width, noSimdCanvas.height);
+  ctxSimd.drawImage(img, 0, 0, simdCanvas.width, simdCanvas.height);
+  times.textContent = "";
+};
+</script>
+
+</body>
+</html>

@@ -13,3 +13,6 @@ add_executable(comparador_simd
     src/vec_add_scalar.c     # <- este faltaba
     src/vec_add_simd.c
 )
+set_source_files_properties(src/vec_add_scalar.c
+    PROPERTIES COMPILE_FLAGS "-O0"
+)

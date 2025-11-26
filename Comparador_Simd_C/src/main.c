@@ -5,7 +5,8 @@
 #include <malloc.h>     // _aligned_malloc / _aligned_free
 #include "vec_add.h"
 
-#define SIZE 10000000   // 10 millones
+#define SIZE 10000000
+// 10 millones
 
 static double now_seconds(void) {
     return (double)clock() / CLOCKS_PER_SEC;
@@ -51,7 +52,7 @@ int main(void) {
     for (size_t i = 0; i < SIZE; ++i) {
         if (fabsf(c1[i] - c2[i]) > 1e-5f) { ok = 0; break; }
     }
-    printf("\nVerificación: %s\n", ok ? "OK" : "FALLÓ");
+    printf("\nVerificacion: %s\n", ok ? "OK" : "FALLÓ");
     if (t_simd > 0) printf("Speedup SIMD vs Scalar: %.2fx\n", t_scalar / t_simd);
 
     _aligned_free(a);
