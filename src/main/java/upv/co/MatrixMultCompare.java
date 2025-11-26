@@ -16,7 +16,7 @@ public class MatrixMultCompare {
     public static void main(String[] args) {
         System.err.close();
         
-        int N = 512;
+        int N =   1024;
         
         long memoryNeeded = (long) N * N * 4 * 4; // 4 matrices de enteros (A, B, BT, 2xC)
         long maxMemory = Runtime.getRuntime().maxMemory();
