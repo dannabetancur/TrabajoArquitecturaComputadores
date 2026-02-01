@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIMD MATRIX ACCELERATOR</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        #matrix-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        .header h1 {
+            font-size: 4.5em;
+            text-shadow: 0 0 30px #0f0, 0 0 50px #0f0;
+            letter-spacing: 12px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .header p {
+            font-size: 2em;
+            color: #0a0;
+            text-shadow: 0 0 15px #0f0;
+            letter-spacing: 3px;
+        }
+
+        .start-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+        }
+
+        .start-button {
+            background: transparent;
+            border: 4px solid #0f0;
+            color: #0f0;
+            font-size: 3em;
+            padding: 30px 80px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
+            animation: glow 2s infinite;
+            font-weight: bold;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 30px rgba(0, 255, 0, 0.6); }
+            50% { box-shadow: 0 0 50px rgba(0, 255, 0, 0.9), 0 0 70px rgba(0, 255, 0, 0.7); }
+        }
+
+        .start-button:hover {
+            background: rgba(0, 255, 0, 0.1);
+            transform: scale(1.1);
+            box-shadow: 0 0 60px rgba(0, 255, 0, 0.9);
+        }
+
+        .start-button:active {
+            transform: scale(0.95);
+        }
+
+        .start-info {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 1.6em;
+            line-height: 2;
+            text-shadow: 0 0 10px #0f0;
+        }
+
+        .comparison-container {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 15px;
+            opacity: 1;
+            transition: opacity 0.8s ease-out;
+        }
+
+        .comparison-container.fade-out {
+            opacity: 0;
+        }
+
+        .method-panel {
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid #0f0;
+            padding: 20px;
+            box-shadow: 0 0 40px rgba(0, 255, 0, 0.6);
+            animation: panelGlow 3s infinite;
+        }
+
+        @keyframes panelGlow {
+            0%, 100% { border-color: #0f0; }
+            50% { border-color: #0a0; }
+        }
+
+        .method-panel.simd {
+            border-color: #00f;
+            box-shadow: 0 0 40px rgba(0, 100, 255, 0.6);
+        }
+
+        @keyframes simdGlow {
+            0%, 100% { border-color: #00f; }
+            50% { border-color: #0080ff; }
+        }
+
+        .method-panel.simd {
+            animation: simdGlow 3s infinite;
+        }
+
+        .panel-title {
+            font-size: 1.8em;
+            text-align: center;
+            margin-bottom: 15px;
+            text-shadow: 0 0 20px currentColor;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .method-panel.simd .panel-title {
+            color: #0080ff;
+        }
+
+        .stats-grid {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            background: rgba(0, 50, 0, 0.5);
+            padding: 12px;
+            border-left: 4px solid #0f0;
+            animation: fadeIn 0.5s;
+        }
+
+        .method-panel.simd .stat-item {
+            background: rgba(0, 0, 50, 0.5);
+            border-left-color: #0080ff;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .stat-label {
+            font-size: 1em;
+            color: #888;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 1.6em;
+            font-weight: bold;
+            text-shadow: 0 0 15px currentColor;
+            letter-spacing: 1px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 45px;
+            background: rgba(0, 50, 0, 0.3);
+            border: 2px solid #0f0;
+            position: relative;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .method-panel.simd .progress-bar {
+            background: rgba(0, 0, 50, 0.3);
+            border-color: #0080ff;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #0f0, #0a0);
+            transition: width 0.3s;
+            box-shadow: 0 0 30px #0f0;
+            position: relative;
+        }
+
+        .method-panel.simd .progress-fill {
+            background: linear-gradient(90deg, #0080ff, #0040ff);
+            box-shadow: 0 0 30px #0080ff;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            font-size: 1.4em;
+            text-shadow: 0 0 8px #000, 0 0 15px currentColor;
+            z-index: 3;
+            letter-spacing: 2px;
+        }
+
+        .log-container {
+            height: 180px;
+            overflow-y: auto;
+            background: rgba(0, 20, 0, 0.5);
+            border: 2px solid #0f0;
+            padding: 10px;
+            font-size: 1.1em;
+        }
+
+        .method-panel.simd .log-container {
+            background: rgba(0, 0, 20, 0.5);
+            border-color: #0080ff;
+        }
+
+        .log-line {
+            margin: 8px 0;
+            animation: logAppear 0.3s;
+            line-height: 1.5;
+        }
+
+        @keyframes logAppear {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .results-panel {
+            display: none;
+            max-width: 1600px;
+            margin: 50px auto;
+            background: rgba(0, 0, 0, 0.95);
+            border: 5px solid #0f0;
+            padding: 50px;
+            box-shadow: 0 0 60px rgba(0, 255, 0, 0.9);
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .results-panel.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .results-title {
+            font-size: 3.5em;
+            text-align: center;
+            margin-bottom: 40px;
+            text-shadow: 0 0 30px #0f0;
+            animation: titlePulse 2s infinite;
+            font-weight: bold;
+            letter-spacing: 5px;
+        }
+
+        @keyframes titlePulse {
+            0%, 100% { color: #0f0; }
+            50% { color: #0ff; }
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 40px;
+            margin: 40px 0;
+        }
+
+        .result-card {
+            background: rgba(0, 50, 0, 0.3);
+            border: 3px solid #0f0;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .result-card h3 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #0a0;
+            letter-spacing: 2px;
+        }
+
+        .result-value {
+            font-size: 3.5em;
+            font-weight: bold;
+            text-shadow: 0 0 20px currentColor;
+            margin: 15px 0;
+            letter-spacing: 3px;
+        }
+
+        .result-card p {
+            font-size: 1.3em;
+            margin-top: 10px;
+            color: #888;
+        }
+
+        .speedup-card {
+            grid-column: span 3;
+            background: rgba(0, 100, 255, 0.2);
+            border-color: #0080ff;
+            padding: 40px;
+        }
+
+        .speedup-card h3 {
+            font-size: 2.5em;
+            color: #0080ff;
+        }
+
+        .speedup-card .result-value {
+            font-size: 5em;
+            color: #0080ff;
+            animation: speedupGlow 1.5s infinite;
+        }
+
+        @keyframes speedupGlow {
+            0%, 100% { text-shadow: 0 0 30px #0080ff; }
+            50% { text-shadow: 0 0 50px #0080ff, 0 0 70px #0080ff; }
+        }
+
+        .speedup-card p {
+            font-size: 1.8em;
+            color: #0ff;
+        }
+
+        .matrix-viz {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 2px;
+            margin: 15px 0;
+            height: 70px;
+        }
+
+        .matrix-cell {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #0f0;
+            animation: cellBlink 2s infinite;
+        }
+
+        .matrix-cell.active {
+            background: rgba(0, 255, 0, 0.8);
+            box-shadow: 0 0 10px #0f0;
+        }
+
+        @keyframes cellBlink {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .method-panel.simd .matrix-cell {
+            border-color: #0080ff;
+            background: rgba(0, 100, 255, 0.1);
+        }
+
+        .method-panel.simd .matrix-cell.active {
+            background: rgba(0, 100, 255, 0.8);
+            box-shadow: 0 0 10px #0080ff;
+        }
+
+        .restart-button {
+            background: #000;
+            border: 3px solid #0f0;
+            color: #0f0;
+            font-size: 2em;
+            padding: 20px 50px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin: 40px auto;
+            display: block;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            font-weight: bold;
+        }
+        
+        .restart-button:hover {
+            background: rgba(0, 255, 0, 0.1);
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(0, 255, 0, 0.8);
+        }
+
+        /* Scrollbar styling */
+        .log-container::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .log-container::-webkit-scrollbar-track {
+            background: #001a00;
+        }
+
+        .log-container::-webkit-scrollbar-thumb {
+            background: #0f0;
+            box-shadow: 0 0 10px #0f0;
+        }
+
+        .method-panel.simd .log-container::-webkit-scrollbar-thumb {
+            background: #0080ff;
+            box-shadow: 0 0 10px #0080ff;
+        }
+
+        @media (max-width: 1024px) {
+            .comparison-container {
+                grid-template-columns: 1fr;
+            }
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+            .speedup-card {
+                grid-column: span 1;
+            }
+            .header h1 {
+                font-size: 3em;
+            }
+            .start-button {
+                font-size: 2em;
+                padding: 20px 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrix-rain"></canvas>
+    
+    <div class="container">
+        <div class="header" id="mainHeader">
+            <h1>⚡ SIMD ACCELERATOR ⚡</h1>
+            <p>VECTOR PROCESSING VISUALIZATION SYSTEM</p>
+        </div>
+
+        <div class="start-screen" id="startScreen">
+            <button class="start-button" id="startBtn">
+                ▶ INICIAR SIMULACIÓN
+            </button>
+            <p class="start-info">
+                Matrix: 1024x1024 | Operaciones: 1,073,741,824<br>
+                Método Escalar vs SIMD Vectorizado (Java Vector API)<br>
+            </p>
+        </div>
+
+        <div class="comparison-container" id="comparisonContainer">
+            <!-- PANEL ESCALAR -->
+            <div class="method-panel">
+                <div class="panel-title">🔢 PROCESAMIENTO ESCALAR</div>
+                
+                <div class="matrix-viz" id="scalarMatrix"></div>
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" id="scalarProgress"></div>
+                    <div class="progress-text" id="scalarProgressText">0%</div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Tiempo Transcurrido</div>
+                        <div class="stat-value" id="scalarTime">0.00 ms</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Operaciones/segundo</div>
+                        <div class="stat-value" id="scalarOps">0 GIOPS</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Elementos Procesados</div>
+                        <div class="stat-value" id="scalarElements">0</div>
+                    </div>
+                </div>
+
+                <div class="log-container" id="scalarLog"></div>
+            </div>
+
+            <!-- PANEL SIMD -->
+            <div class="method-panel simd">
+                <div class="panel-title">⚡ PROCESAMIENTO SIMD</div>
+                
+                <div class="matrix-viz" id="simdMatrix"></div>
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" id="simdProgress"></div>
+                    <div class="progress-text" id="simdProgressText">0%</div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Tiempo Transcurrido</div>
+                        <div class="stat-value" id="simdTime">0.00 ms</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Operaciones/segundo</div>
+                        <div class="stat-value" id="simdOps">0 GIOPS</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Ancho de Vector</div>
+                        <div class="stat-value">512 bits (16×int32)</div>
+                    </div>
+                </div>
+
+                <div class="log-container" id="simdLog"></div>
+            </div>
+            
+            <button class="start-button" id="showResultsBtn" style="grid-column: span 2; margin-top: 20px; display: none; font-size: 1.6em; padding: 15px 50px;">
+                📊 VER RESULTADOS
+            </button>
+
+            <button class="restart-button" id="restartFromCalc" style="grid-column: span 2; margin-top: 15px; display: none; font-size: 1.4em; padding: 15px 40px;">
+                🔄 REINICIAR SIMULACIÓN
+            </button>
+        </div>
+
+        <div class="results-panel" id="resultsPanel">
+            <div class="results-title">
+                ✨ RESULTADOS DE BENCHMARK ✨
+            </div>
+
+            <div class="comparison-grid">
+                <div class="result-card">
+                    <h3>Método Escalar</h3>
+                    <div class="result-value" style="color: #0f0;" id="finalScalarTime">0 ms</div>
+                    <p id="finalScalarOps">0 GIOPS</p>
+                </div>
+
+                <div class="result-card">
+                    <h3>Método SIMD</h3>
+                    <div class="result-value" style="color: #0080ff;" id="finalSimdTime">0 ms</div>
+                    <p id="finalSimdOps">0 GIOPS</p>
+                </div>
+
+                <div class="result-card">
+                    <h3>Tiempo Ahorrado</h3>
+                    <div class="result-value" style="color: #0ff;" id="timeSaved">0 ms</div>
+                    <p>Reducción de latencia</p>
+                </div>
+
+                <div class="result-card speedup-card">
+                    <h3>SPEEDUP SIMD</h3>
+                    <div class="result-value" id="speedupValue">0.00x</div>
+                    <p id="speedupText">MÁS RÁPIDO</p>
+                </div>
+            </div>
+
+            <button class="restart-button" onclick="location.reload()">
+                🔄 REINICIAR SIMULACIÓN
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Matrix rain effect
+        const canvas = document.getElementById('matrix-rain');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const chars = '01アイウエオカキクケコサシスセソタチツテト';
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#0f0';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 35);
+
+        // Create matrix visualization cells
+        function createMatrixCells(containerId, count = 64) {
+            const container = document.getElementById(containerId);
+            for (let i = 0; i < count; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'matrix-cell';
+                container.appendChild(cell);
+            }
+        }
+
+        createMatrixCells('scalarMatrix');
+        createMatrixCells('simdMatrix');
+
+        // Simulation logic
+        const startBtn = document.getElementById('startBtn');
+        const startScreen = document.getElementById('startScreen');
+        const comparisonContainer = document.getElementById('comparisonContainer');
+        const resultsPanel = document.getElementById('resultsPanel');
+        const showResultsBtn = document.getElementById('showResultsBtn');
+        const restartFromCalc = document.getElementById('restartFromCalc');
+        const mainHeader = document.getElementById('mainHeader');
+
+        const matrixSize = 1024;
+        const totalOps = matrixSize * matrixSize * matrixSize;
+
+        let finalScalarTimeValue = 0;
+        let finalSimdTimeValue = 0;
+        let finalScalarGIOPS = 0;
+        let finalSimdGIOPS = 0;
+
+        const scalarLogs = [
+            '> Inicializando bucles anidados (i, j, k)',
+            '> Cargando A[i][k] desde memoria',
+            '> Cargando B[k][j] desde memoria',
+            '> Multiplicando elemento único (int32)',
+            '> Acumulando en C[i][j]',
+            '> Cache miss en acceso B (stride largo)',
+            '> Procesando 1 elemento por iteración',
+            '> Iteración k++ (1048576 elementos)',
+            '> Completando fila i=' + Math.floor(Math.random() * 1024),
+            '> Throughput: ~0.53 GIOPS'
+        ];
+
+        const simdLogs = [
+            '> Transponiendo matriz B (3-5 ms)',
+            '> Mejorando localidad de cache',
+            '> Cargando IntVector (16 int32 simultáneos)',
+            '> IntVector.mul: 16 muls paralelas',
+            '> IntVector.add: acumulación vectorial',
+            '> Reducción: suma componentes vector',
+            '> Procesando tail escalar (~30 ms)',
+            '> Ops vectoriales: 75.8% del tiempo',
+            '> Finalizando multiplicación',
+            '> Throughput: ~2.62 GIOPS (4.92x faster)'
+        ];
+
+        function addLog(containerId, message) {
+            const container = document.getElementById(containerId);
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.textContent = message;
+            container.appendChild(line);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function updateProgress(progressId, textId, percent) {
+            document.getElementById(progressId).style.width = percent + '%';
+            document.getElementById(textId).textContent = Math.round(percent) + '%';
+        }
+
+        function updateStats(timeId, opsId, elemId, time, totalOps, matrixSize) {
+            const timeMs = time / 1000;
+            document.getElementById(timeId).textContent = timeMs.toFixed(2) + ' ms';
+            
+            if (timeMs > 0) {
+                const gflops = (totalOps / (timeMs / 1000)) / 1e9;
+                document.getElementById(opsId).textContent = gflops.toFixed(2) + ' GIOPS';
+            }
+            
+            if (elemId) {
+                const progress = time / 9844;
+                const elements = Math.floor(progress * matrixSize * matrixSize);
+                document.getElementById(elemId).textContent = elements.toLocaleString();
+            }
+        }
+
+        function animateMatrixCells(containerId, duration) {
+            const cells = document.querySelectorAll(`#${containerId} .matrix-cell`);
+            const totalCells = cells.length;
+            const intervalTime = duration / totalCells;
+            let index = 0;
+            
+            const interval = setInterval(() => {
+                if (index > 0) {
+                    cells[index - 1].classList.remove('active');
+                }
+                if (index < totalCells) {
+                    cells[index].classList.add('active');
+                    index++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, intervalTime);
+        }
+
+        async function runSimulation() {
+            startScreen.style.display = 'none';
+            comparisonContainer.style.display = 'grid';
+            showResultsBtn.style.display = 'none';
+            restartFromCalc.style.display = 'none';
+            mainHeader.style.display = 'none';
+
+            // Simulate scalar processing (slower)
+            const scalarDuration = 9844;
+            const scalarStart = Date.now();
+            let scalarLogIndex = 0;
+
+            const scalarInterval = setInterval(() => {
+                const elapsed = Date.now() - scalarStart;
+                const progress = Math.min((elapsed / scalarDuration) * 100, 100);
+                
+                updateProgress('scalarProgress', 'scalarProgressText', progress);
+                updateStats('scalarTime', 'scalarOps', 'scalarElements', elapsed, totalOps, matrixSize);
+
+                if (scalarLogIndex < scalarLogs.length && elapsed > (scalarLogIndex / scalarLogs.length) * scalarDuration) {
+                    addLog('scalarLog', scalarLogs[scalarLogIndex]);
+                    scalarLogIndex++;
+                }
+
+                if (elapsed >= scalarDuration) {
+                    clearInterval(scalarInterval);
+                    updateProgress('scalarProgress', 'scalarProgressText', 100);
+                    finalScalarTimeValue = scalarDuration;
+                    const timeMs = scalarDuration / 1000;
+                    finalScalarGIOPS = (totalOps / (timeMs / 1000)) / 1e9;
+                }
+            }, 100);
+
+            animateMatrixCells('scalarMatrix', scalarDuration);
+
+            // Simulate SIMD processing (faster)
+            const simdDuration = 2000;
+            const simdStart = Date.now();
+            let simdLogIndex = 0;
+
+            const simdInterval = setInterval(() => {
+                const elapsed = Date.now() - simdStart;
+                const progress = Math.min((elapsed / simdDuration) * 100, 100);
+                
+                updateProgress('simdProgress', 'simdProgressText', progress);
+                updateStats('simdTime', 'simdOps', null, elapsed, totalOps, matrixSize);
+
+                if (simdLogIndex < simdLogs.length && elapsed > (simdLogIndex / simdLogs.length) * simdDuration) {
+                    addLog('simdLog', simdLogs[simdLogIndex]);
+                    simdLogIndex++;
+                }
+
+                if (elapsed >= simdDuration) {
+                    clearInterval(simdInterval);
+                    updateProgress('simdProgress', 'simdProgressText', 100);
+                    finalSimdTimeValue = simdDuration;
+                    const timeMs = simdDuration / 1000;
+                    finalSimdGIOPS = (totalOps / (timeMs / 1000)) / 1e9;
+                }
+            }, 100);
+
+            animateMatrixCells('simdMatrix', simdDuration);
+
+            // Show buttons after both complete
+            setTimeout(() => {
+                showResultsBtn.style.display = 'block';
+                restartFromCalc.style.display = 'block';
+            }, Math.max(scalarDuration, simdDuration) + 500);
+        }
+
+        function showResults() {
+            const scalarTime = finalScalarTimeValue;
+            const simdTime = finalSimdTimeValue;
+            const speedup = scalarTime / simdTime;
+            const timeSaved = scalarTime - simdTime;
+            const improvement = ((scalarTime - simdTime) / scalarTime * 100);
+
+            document.getElementById('finalScalarTime').textContent = (scalarTime / 1000).toFixed(2) + ' ms';
+            document.getElementById('finalSimdTime').textContent = (simdTime / 1000).toFixed(2) + ' ms';
+            document.getElementById('timeSaved').textContent = (timeSaved / 1000).toFixed(2) + ' ms';
+            document.getElementById('speedupValue').textContent = speedup.toFixed(2) + 'x';
+            
+            document.getElementById('finalScalarOps').textContent = finalScalarGIOPS.toFixed(2) + ' GIOPS';
+            document.getElementById('finalSimdOps').textContent = finalSimdGIOPS.toFixed(2) + ' GIOPS';
+            
+            document.getElementById('speedupText').textContent = 
+                `${improvement.toFixed(1)}% MÁS RÁPIDO`;
+
+            resultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        startBtn.addEventListener('click', runSimulation);
+
+        restartFromCalc.addEventListener('click', () => {
+            location.reload();
+        });
+
+        showResultsBtn.addEventListener('click', () => {
+	comparisonContainer.classList.add('fade-out');
+        
+        setTimeout(() => {
+            comparisonContainer.style.display = 'none';
+            resultsPanel.style.display = 'block';
+            setTimeout(() => {
+                resultsPanel.classList.add('show');
+                showResults();
+            }, 50);
+        }, 800);
+    });
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+</script>
